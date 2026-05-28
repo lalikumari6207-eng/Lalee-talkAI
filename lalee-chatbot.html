@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lalee AI – Smart Companion</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#07070f;--surface:#101018;--card:#161622;--border:#252535;
+  --accent:#bf7fff;--accent2:#7b8cff;--green:#4ade80;
+  --text:#eeeaff;--muted:#6b6b90;
+  --ubub:#2a1c47;--abub:#13131f;
+  --glow:rgba(191,127,255,.18);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden}
+
+/* ═══════════════ SHARED BG ═══════════════ */
+.bg-fx{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 55% at 15% 15%,rgba(123,140,255,.09) 0%,transparent 60%),
+    radial-gradient(ellipse 55% 45% at 85% 80%,rgba(191,127,255,.12) 0%,transparent 55%),
+    radial-gradient(ellipse 35% 35% at 50% 50%,rgba(74,222,128,.03) 0%,transparent 70%);
+}
+
+/* ═══════════════ SPLASH ═══════════════ */
+#splash{
+  position:fixed;inset:0;z-index:900;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--bg);
+  animation:splashFade 0.5s 2.2s ease forwards;
+}
+@keyframes splashFade{to{opacity:0;pointer-events:none;visibility:hidden}}
+
+.splash-logo{
+  width:96px;height:96px;border-radius:26px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:2.8rem;
+  box-shadow:0 0 60px rgba(191,127,255,.45),0 0 120px rgba(191,127,255,.2);
+  animation:splashPop .6s cubic-bezier(.34,1.56,.64,1) both,splashGlow 1.5s .6s ease-in-out infinite alternate;
+}
+@keyframes splashPop{from{transform:scale(0) rotate(-20deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+@keyframes splashGlow{from{box-shadow:0 0 40px rgba(191,127,255,.4)}to{box-shadow:0 0 80px rgba(191,127,255,.7),0 0 140px rgba(123,140,255,.3)}}
+
+.splash-name{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:3rem;
+  margin-top:18px;letter-spacing:-.02em;
+  background:linear-gradient(135deg,#fff 30%,var(--accent));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:fadeUp .5s .4s ease both;
+}
+.splash-tag{
+  font-size:.85rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;
+  animation:fadeUp .5s .65s ease both;margin-top:6px;
+}
+.splash-bar{
+  width:120px;height:3px;border-radius:99px;background:var(--border);
+  margin-top:36px;overflow:hidden;
+  animation:fadeUp .4s .8s ease both;
+}
+.splash-bar-fill{
+  height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--accent2),var(--accent));
+  animation:loadBar 1.5s .9s ease forwards;
+  width:0%;
+}
+@keyframes loadBar{to{width:100%}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══════════════ NAME SCREEN ═══════════════ */
+#nameScreen{
+  position:fixed;inset:0;z-index:800;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px;
+  opacity:0;pointer-events:none;
+  transition:opacity .5s ease;
+}
+#nameScreen.visible{opacity:1;pointer-events:all}
+
+.name-card{
+  width:100%;max-width:420px;
+  background:var(--card);border:1px solid var(--border);border-radius:24px;
+  padding:36px 32px 32px;
+  box-shadow:0 32px 80px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.04);
+  text-align:center;
+  animation:cardPop .5s cubic-bezier(.34,1.36,.64,1) both;
+}
+@keyframes cardPop{from{transform:scale(.9) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+
+.name-logo{
+  width:64px;height:64px;border-radius:18px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;margin:0 auto 16px;
+  box-shadow:0 0 30px var(--glow);
+  animation:pulse 3s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{box-shadow:0 0 20px var(--glow)}50%{box-shadow:0 0 40px rgba(191,127,255,.4)}}
+
+.name-card h2{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;
+  margin-bottom:6px;
+}
+.name-card p{color:var(--muted);font-size:.88rem;line-height:1.6;margin-bottom:24px}
+
+.name-input-wrap{position:relative;margin-bottom:14px;}
+.name-input-wrap input{
+  width:100%;padding:14px 16px;border-radius:12px;
+  background:var(--surface);border:1.5px solid var(--border);
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:1rem;
+  outline:none;transition:border-color .2s,box-shadow .2s;
+}
+.name-input-wrap input:focus{border-color:rgba(191,127,255,.6);box-shadow:0 0 0 3px rgba(191,127,255,.1)}
+.name-input-wrap input::placeholder{color:var(--muted)}
+
+.name-btn{
+  width:100%;padding:13px;border-radius:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;color:#fff;font-family:'Syne',sans-serif;font-weight:700;
+  font-size:1rem;cursor:pointer;transition:all .2s;letter-spacing:.02em;
+}
+.name-btn:hover{transform:translateY(-1px);box-shadow:0 8px 25px rgba(191,127,255,.4)}
+.name-btn:active{transform:translateY(0)}
+.name-err{font-size:.78rem;color:#f87171;margin-top:6px;display:none}
+
+/* ═══════════════ MAIN CHAT APP ═══════════════ */
+#app{
+  position:fixed;inset:0;z-index:700;
+  display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;
+  transition:opacity .4s ease;
+}
+#app.visible{opacity:1;pointer-events:all}
+
+/* Header */
+.app-header{
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 20px;
+  background:rgba(7,7,15,.88);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  z-index:10;
+}
+.hdr-left{display:flex;align-items:center;gap:10px}
+.hdr-logo{
+  width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.95rem;flex-shrink:0;animation:pulse 3s ease-in-out infinite;
+}
+.hdr-info{line-height:1.2}
+.hdr-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem}
+.hdr-status{font-size:.68rem;color:var(--green);display:flex;align-items:center;gap:4px}
+.hdr-status::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.hdr-user{
+  font-size:.75rem;color:var(--muted);background:var(--card);
+  border:1px solid var(--border);padding:4px 10px;border-radius:20px;
+  display:flex;align-items:center;gap:5px;
+}
+.hdr-user span{color:var(--accent);font-weight:600}
+.clear-btn{
+  font-size:.7rem;color:var(--muted);background:none;
+  border:1px solid var(--border);padding:4px 10px;border-radius:8px;
+  cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;
+}
+.clear-btn:hover{color:#f87171;border-color:#f87171}
+
+/* Scroll area */
+#messages{
+  flex:1;overflow-y:auto;padding:18px 16px;
+  display:flex;flex-direction:column;gap:14px;
+  scroll-behavior:smooth;
+}
+#messages::-webkit-scrollbar{width:3px}
+#messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* Messages */
+.msg{display:flex;gap:9px;max-width:88%;animation:msgIn .3s ease both}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{flex-direction:row-reverse;align-self:flex-end}
+.msg.ai{align-self:flex-start}
+.avatar{
+  width:30px;height:30px;border-radius:9px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.78rem;font-weight:800;
+}
+.msg.ai .avatar{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.msg.user .avatar{
+  background:var(--ubub);color:var(--accent);
+  border:1px solid rgba(191,127,255,.25);font-size:.65rem;
+}
+.bubble{
+  padding:11px 15px;border-radius:14px;
+  font-size:.87rem;line-height:1.72;max-width:100%;
+}
+.msg.ai .bubble{background:var(--abub);border:1px solid var(--border);border-top-left-radius:3px;color:var(--text)}
+.msg.user .bubble{background:var(--ubub);border:1px solid rgba(191,127,255,.2);border-top-right-radius:3px;color:#ddd0ff}
+
+/* Markdown */
+.bubble strong{color:var(--accent);font-weight:600}
+.bubble em{color:#a5b4fc;font-style:italic}
+.bubble code{background:rgba(191,127,255,.13);color:#d8b4fe;padding:2px 6px;border-radius:5px;font-family:'Courier New',monospace;font-size:.81em}
+.bubble pre{background:#090913;border:1px solid var(--border);border-radius:10px;padding:13px;margin:10px 0;overflow-x:auto;font-family:'Courier New',monospace;font-size:.79rem;line-height:1.6;position:relative}
+.bubble pre code{background:none;padding:0;color:#a5b4fc;font-size:inherit}
+.copy-code-btn{
+  position:absolute;top:8px;right:8px;
+  font-size:.66rem;padding:3px 9px;border-radius:6px;
+  background:var(--card);border:1px solid var(--border);
+  color:var(--muted);cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;
+}
+.copy-code-btn:hover{color:var(--accent);border-color:var(--accent)}
+.bubble ul,.bubble ol{padding-left:18px;margin:7px 0}
+.bubble li{margin:3px 0}
+.bubble h1,.bubble h2,.bubble h3{font-family:'Syne',sans-serif;color:var(--accent);margin:11px 0 5px}
+.bubble h1{font-size:1.05rem}.bubble h2{font-size:.97rem}.bubble h3{font-size:.88rem}
+.bubble blockquote{border-left:3px solid var(--accent);padding:5px 12px;margin:8px 0;background:rgba(191,127,255,.06);border-radius:0 8px 8px 0;color:var(--muted)}
+.bubble table{width:100%;border-collapse:collapse;margin:9px 0;font-size:.81rem}
+.bubble th{background:rgba(191,127,255,.14);color:var(--accent);padding:7px 11px;text-align:left;border:1px solid var(--border)}
+.bubble td{padding:6px 11px;border:1px solid var(--border)}
+.bubble tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+.bubble a{color:var(--accent2);text-decoration:underline}
+.bubble hr{border:none;border-top:1px solid var(--border);margin:10px 0}
+
+/* Download code button */
+.dl-code-btn{
+  display:inline-flex;align-items:center;gap:5px;margin-top:8px;
+  font-size:.74rem;padding:5px 12px;border-radius:8px;
+  background:rgba(191,127,255,.12);border:1px solid rgba(191,127,255,.3);
+  color:var(--accent);cursor:pointer;transition:all .2s;
+  font-family:'DM Sans',sans-serif;
+}
+.dl-code-btn:hover{background:rgba(191,127,255,.2)}
+
+/* Typing dots */
+.typing-dots{display:flex;gap:4px;align-items:center;padding:3px 0}
+.typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:.3;animation:dot 1.2s ease-in-out infinite}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1.1)}}
+
+/* File preview in message */
+.file-preview-msg{
+  display:flex;align-items:center;gap:8px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:8px 12px;margin-bottom:6px;
+  font-size:.78rem;color:var(--muted);
+}
+.file-preview-msg .file-icon{font-size:1.1rem}
+.file-preview-msg .file-name{color:var(--text);font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── INPUT AREA ── */
+.input-area{
+  flex-shrink:0;
+  padding:10px 14px 8px;
+  background:rgba(7,7,15,.92);
+  border-top:1px solid var(--border);
+}
+/* attached files preview */
+#attachedPreview{
+  display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;
+}
+.attached-chip{
+  display:flex;align-items:center;gap:5px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:3px 10px 3px 8px;
+  font-size:.72rem;color:var(--muted);
+}
+.attached-chip .chip-icon{font-size:.9rem}
+.attached-chip .chip-name{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.attached-chip .chip-remove{cursor:pointer;color:var(--muted);margin-left:3px;font-size:.8rem;transition:color .2s}
+.attached-chip .chip-remove:hover{color:#f87171}
+
+.input-box{
+  display:flex;align-items:flex-end;gap:9px;
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:14px;padding:8px 10px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.input-box:focus-within{border-color:rgba(191,127,255,.5);box-shadow:0 0 0 3px rgba(191,127,255,.08)}
+
+.attach-btn{
+  width:32px;height:32px;border-radius:9px;flex-shrink:0;
+  background:var(--card);border:1px solid var(--border);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:.95rem;transition:all .2s;color:var(--muted);
+  position:relative;overflow:hidden;
+}
+.attach-btn:hover{border-color:var(--accent);color:var(--accent)}
+#fileInput{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+
+#userInput{
+  flex:1;background:none;border:none;outline:none;
+  color:var(--text);font-family:'DM Sans',sans-serif;
+  font-size:.88rem;resize:none;max-height:130px;min-height:22px;line-height:1.55;
+}
+#userInput::placeholder{color:var(--muted)}
+
+.send-btn{
+  width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;color:#fff;
+}
+.send-btn:hover{transform:scale(1.07);box-shadow:0 4px 18px rgba(191,127,255,.45)}
+.send-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+
+/* Quick prompts */
+.quick-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.qp{
+  font-size:.69rem;padding:4px 10px;border-radius:12px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  color:var(--muted);cursor:pointer;transition:all .2s;
+  white-space:nowrap;
+}
+.qp:hover{color:var(--accent);border-color:rgba(191,127,255,.4)}
+
+/* Footer */
+.app-footer{
+  flex-shrink:0;text-align:center;
+  padding:5px 0 7px;
+  font-size:.66rem;color:var(--muted);letter-spacing:.04em;
+  border-top:1px solid rgba(37,37,53,.5);
+  background:rgba(7,7,15,.7);
+}
+.app-footer .flag{font-size:.8rem}
+.app-footer strong{color:rgba(191,127,255,.7)}
+
+/* ═══════ RESPONSIVE ═══════ */
+@media(max-width:600px){
+  .hdr-user{display:none}
+  #messages{padding:12px 10px}
+  .msg{max-width:95%}
+  .quick-row{display:none}
+}
+</style>
+</head>
+<body>
+<div class="bg-fx"></div>
+
+<!-- ══════════ SPLASH SCREEN ══════════ -->
+<div id="splash">
+  <div class="splash-logo">✦</div>
+  <div class="splash-name">Lalee</div>
+  <div class="splash-tag">Your Smart AI Companion</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
+
+<!-- ══════════ NAME ENTRY SCREEN ══════════ -->
+<div id="nameScreen">
+  <div class="name-card">
+    <div class="name-logo">✦</div>
+    <h2>Welcome to Lalee</h2>
+    <p>Apna naam batao toh main tumhe personally greet kar sakta hoon! 😊</p>
+    <div class="name-input-wrap">
+      <input type="text" id="nameInput" placeholder="Tumhara naam..." maxlength="30" autocomplete="off"/>
+    </div>
+    <div class="name-err" id="nameErr">Naam toh batao, tabhi baat karenge! 😄</div>
+    <button class="name-btn" onclick="saveName()">Lalee se Milna Hai! ✦</button>
+  </div>
+</div>
+
+<!-- ══════════ MAIN CHAT APP ══════════ -->
+<div id="app">
+  <!-- Header -->
+  <div class="app-header">
+    <div class="hdr-left">
+      <div class="hdr-logo">✦</div>
+      <div class="hdr-info">
+        <div class="hdr-name">Lalee AI</div>
+        <div class="hdr-status">Online &amp; Ready</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="hdr-user">👤 <span id="displayName">User</span></div>
+      <button class="clear-btn" onclick="clearChat()">🗑 Clear</button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div id="messages"></div>
+
+  <!-- Input Area -->
+  <div class="input-area">
+    <div id="attachedPreview"></div>
+    <div class="input-box">
+      <div class="attach-btn" title="Photo / File attach karo">
+        📎<input type="file" id="fileInput" multiple accept="image/*,.pdf,.txt,.js,.py,.html,.css,.json,.csv,.md,.ts,.jsx,.tsx,.cpp,.java,.c" onchange="handleFiles(this.files)"/>
+      </div>
+      <textarea id="userInput" rows="1"
+        placeholder="Kuch bhi poochho... (Shift+Enter = naya line)"
+        onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+    <div class="quick-row">
+      <span class="qp" onclick="qp('Mujhe Python mein ek calculator program likho')">💻 Code</span>
+      <span class="qp" onclick="qp('Is website ke bugs batao: https://example.com')">🔍 Bug Check</span>
+      <span class="qp" onclick="qp('Photosynthesis detail mein samjhao')">📚 Padhai</span>
+      <span class="qp" onclick="qp('Ek magical story likho 500 words mein')">✍️ Story</span>
+      <span class="qp" onclick="qp('React mein login page ka code do')">⚛️ React</span>
+      <span class="qp" onclick="qp('Mujhe aaj ke liye motivate karo')">⚡ Motivation</span>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="app-footer">
+    <span class="flag">🇮🇳</span> Made in India &nbsp;|&nbsp; <strong>© 2026 Lalee AI</strong>
+  </div>
+</div>
+
+<!-- hidden link for file downloads -->
+<a id="dl" style="display:none"></a>
+
+<script>
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let userName = '';
+let history  = [];
+let attachedFiles = []; // {name, type, dataUrl, text}
+
+// ══════════════════════════════════════════════
+//  SYSTEM PROMPT
+// ══════════════════════════════════════════════
+const SYSTEM = `Tu Lalee hai — ek bahut hi smart, warm aur helpful AI assistant. Kuch important rules:
+
+**PERSONALITY:**
+- Friendly, funny, aur caring. Students ko especially pasand aata hai.
+- Hinglish mein baat kar (Hindi + English mix). Natural lage, forced nahi.
+- User ka naam use karo baat mein thodi der baad.
+- Kabhi bhi "Sorry, main yeh nahi kar sakta" ya "Main yeh answer nahi de sakta" MAT bolna. Hamesha poori koshish karo best answer dene ki.
+
+**CODING EXPERT:**
+- Python, JavaScript, TypeScript, React, HTML/CSS, Java, C++, C, Go, SQL — sab mein expert hai.
+- Clean, well-commented code likho.
+- Agar code file banana ho (user ne file maangi ho), toh code dene ke baad likho: [FILE:filename.ext] (sirf extension ke saath).
+- Example: "Yahan Python code hai:\n\`\`\`python\n...\n\`\`\`\n[FILE:calculator.py]"
+
+**BUG ANALYSIS:**
+- Koi bhi website/app ka URL ya code diya ho toh detail mein bugs, security issues, performance problems batao.
+- Constructive feedback do.
+
+**DEEP ANSWERS:**
+- Science, math, history, geography — sab mein detail answer do.
+- Examples aur analogies use karo.
+- Lamba answer dene se maat daro agar topic bada ho.
+
+**WRITING:**
+- Stories, books, essays, emails — sab likhta hai.
+- Chapters, plot, characters sab ke saath proper structure.
+
+**FORMATTING:**
+- **Bold** = important cheezein
+- \`code\` = inline code
+- Lists, headings, tables use karo jab zaroorat ho.
+- Code blocks use karo code ke liye.
+
+**FILES:**
+- Agar user ne image attach ki ho toh usse dekho aur describe karo / kaam karo.
+- Agar text/code file attach ki ho toh usko padhkar kaam karo.`;
+
+// ══════════════════════════════════════════════
+//  SPLASH → NAME → CHAT
+// ══════════════════════════════════════════════
+window.addEventListener('load', () => {
+  // After 2.2s splash fades, show name screen
+  setTimeout(() => {
+    document.getElementById('nameScreen').classList.add('visible');
+    document.getElementById('nameInput').focus();
+  }, 2400);
+});
+
+document.getElementById('nameInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter') saveName();
+});
+
+function saveName(){
+  const val = document.getElementById('nameInput').value.trim();
+  if(!val){
+    document.getElementById('nameErr').style.display='block';
+    document.getElementById('nameInput').focus();
+    return;
+  }
+  userName = val;
+  document.getElementById('nameErr').style.display='none';
+
+  // Transition to chat
+  const ns = document.getElementById('nameScreen');
+  ns.style.transition='opacity .4s ease';
+  ns.style.opacity='0';
+  setTimeout(()=>{
+    ns.style.display='none';
+    document.getElementById('displayName').textContent = userName;
+    document.getElementById('app').classList.add('visible');
+    // Welcome message
+    addMsg('ai', `Namaste **${userName}** ji! 🙏✨\n\nMain Lalee hoon — tumhara personal AI dost! Main tumhari help kar sakta hoon:\n\n- 💻 **Coding** — koi bhi language mein program likhna, bugs fix karna, code explain karna\n- 📚 **Padhai** — kisi bhi subject mein detail explanation\n- 🔍 **Bug Finder** — website/app ka link ya code do, main analyse karunga\n- ✍️ **Writing** — stories, books, essays, letters sab\n- 📎 **Files** — photo ya code file attach karo, main dekhunga\n- 💬 **Baat** — kuch bhi poochho, main hamesha yahan hoon!\n\nToh batao **${userName}**, kya karna hai aaj? 😊`);
+  }, 450);
+}
+
+// ══════════════════════════════════════════════
+//  FILE HANDLING
+// ══════════════════════════════════════════════
+function handleFiles(files){
+  Array.from(files).forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const obj = {name:file.name, type:file.type, dataUrl:e.target.result, text:''};
+      // If text-based file, extract text
+      if(file.type.startsWith('text/') || /\.(js|ts|py|html|css|json|csv|md|jsx|tsx|cpp|java|c|txt)$/i.test(file.name)){
+        obj.text = e.target.result; // for text it's the content since we used readAsText below
+      }
+      attachedFiles.push(obj);
+      renderAttached();
+    };
+    // Choose reader method
+    if(file.type.startsWith('image/')){
+      reader.readAsDataURL(file);
+    } else {
+      reader.readAsText(file);
+    }
+  });
+  // Reset input so same file can be re-attached
+  document.getElementById('fileInput').value='';
+}
+
+function renderAttached(){
+  const div = document.getElementById('attachedPreview');
+  div.innerHTML='';
+  attachedFiles.forEach((f,i)=>{
+    const chip = document.createElement('div');
+    chip.className='attached-chip';
+    const icon = f.type.startsWith('image/') ? '🖼️' :
+                 /\.py$/i.test(f.name) ? '🐍' :
+                 /\.(js|ts|jsx|tsx)$/i.test(f.name) ? '⚡' :
+                 /\.html?$/i.test(f.name) ? '🌐' :
+                 /\.json$/i.test(f.name) ? '📋' : '📄';
+    chip.innerHTML=`<span class="chip-icon">${icon}</span><span class="chip-name">${f.name}</span><span class="chip-remove" onclick="removeFile(${i})">✕</span>`;
+    div.appendChild(chip);
+  });
+}
+
+function removeFile(i){
+  attachedFiles.splice(i,1);
+  renderAttached();
+}
+
+// ══════════════════════════════════════════════
+//  SEND MESSAGE
+// ══════════════════════════════════════════════
+async function sendMessage(){
+  const inp = document.getElementById('userInput');
+  const text = inp.value.trim();
+  if(!text && attachedFiles.length===0) return;
+
+  inp.value=''; inp.style.height='auto';
+  document.getElementById('sendBtn').disabled=true;
+
+  // Build display message
+  let displayHtml = '';
+  if(attachedFiles.length>0){
+    attachedFiles.forEach(f=>{
+      const icon = f.type.startsWith('image/') ? '🖼️' : '📄';
+      displayHtml += `<div class="file-preview-msg"><span class="file-icon">${icon}</span><span class="file-name">${f.name}</span></div>`;
+    });
+  }
+
+  // Add user message bubble
+  const userBubbleText = text || '(File attached)';
+  addMsgRaw('user', displayHtml + renderMD(userBubbleText));
+
+  // Build API content array
+  const msgContent = [];
+
+  // Add file contents
+  attachedFiles.forEach(f=>{
+    if(f.type.startsWith('image/')){
+      // image as base64
+      const b64 = f.dataUrl.split(',')[1];
+      const mediaType = f.type;
+      msgContent.push({type:'image',source:{type:'base64',media_type:mediaType,data:b64}});
+    } else {
+      // text file
+      msgContent.push({type:'text',text:`[File: ${f.name}]\n\`\`\`\n${f.text}\n\`\`\``});
+    }
+  });
+
+  if(text) msgContent.push({type:'text',text});
+
+  // Push to history
+  history.push({role:'user', content: msgContent.length===1 && msgContent[0].type==='text' ? text : msgContent});
+
+  // Clear attached files
+  attachedFiles=[];
+  renderAttached();
+
+  // Typing indicator
+  const typingEl = addMsg('ai','',true);
+
+  try{
+    const res = await fetch('https://patient-forest-11b4.lalikumari6207.workers.dev',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:SYSTEM,
+        messages:history
+      })
+    });
+    const data = await res.json();
+    typingEl.remove();
+
+    if(data.content && data.content[0]){
+      const reply = data.content[0].text;
+      history.push({role:'assistant',content:reply});
+      renderAIMessage(reply);
+    } else {
+      addMsg('ai','Kuch technical issue hua! Thodi der baad dobara try karo. 🙏');
+    }
+  } catch(err){
+    typingEl.remove();
+    addMsg('ai','⚠️ Network problem! Connection check karo.');
+  }
+
+  document.getElementById('sendBtn').disabled=false;
+  document.getElementById('userInput').focus();
+}
+
+// ══════════════════════════════════════════════
+//  RENDER AI MESSAGE (with file download buttons)
+// ══════════════════════════════════════════════
+function renderAIMessage(text){
+  // Check for [FILE:filename.ext] markers
+  const fileMarkers = [];
+  const cleanText = text.replace(/\[FILE:([^\]]+)\]/g, (m,fname)=>{
+    fileMarkers.push(fname.trim());
+    return '';
+  });
+
+  // Render markdown
+  const wrap = document.createElement('div');
+  wrap.className='msg ai';
+  wrap.style.animation='msgIn .3s ease both';
+
+  const av=document.createElement('div');av.className='avatar';av.textContent='✦';
+  const bubble=document.createElement('div');bubble.className='bubble';
+  bubble.innerHTML=renderMD(cleanText.trim());
+
+  // Add copy buttons to pre blocks
+  bubble.querySelectorAll('pre').forEach(pre=>{
+    const btn=document.createElement('button');
+    btn.className='copy-code-btn';btn.textContent='Copy';
+    btn.onclick=()=>{
+      const code=pre.querySelector('code');
+      navigator.clipboard.writeText(code?code.textContent:pre.textContent);
+      btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500);
+    };
+    pre.style.position='relative';pre.appendChild(btn);
+  });
+
+  // Add file download buttons
+  if(fileMarkers.length>0){
+    fileMarkers.forEach(fname=>{
+      // Find the code in the bubble
+      const codeBlocks = bubble.querySelectorAll('pre code');
+      let codeContent='';
+      if(codeBlocks.length>0){
+        // Try to find the most relevant block — use last one if multiple
+        codeContent=codeBlocks[codeBlocks.length-1].textContent;
+      }
+      if(codeContent){
+        const dlBtn=document.createElement('button');
+        dlBtn.className='dl-code-btn';
+        dlBtn.innerHTML=`💾 Download as <strong>${fname}</strong>`;
+        dlBtn.onclick=()=>downloadFile(fname,codeContent);
+        bubble.appendChild(dlBtn);
+      }
+    });
+  }
+
+  wrap.appendChild(av);wrap.appendChild(bubble);
+  document.getElementById('messages').appendChild(wrap);
+  document.getElementById('messages').scrollTop=99999;
+}
+
+// ══════════════════════════════════════════════
+//  DOWNLOAD FILE
+// ══════════════════════════════════════════════
+function downloadFile(filename, content){
+  const blob=new Blob([content],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.getElementById('dl');
+  a.href=url;a.download=filename;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+// ══════════════════════════════════════════════
+//  MARKDOWN RENDERER
+// ══════════════════════════════════════════════
+function renderMD(text){
+  if(!text) return '';
+  let t = text
+    .replace(/```(\w*)\n([\s\S]*?)```/g,(_,lang,code)=>`<pre><code class="lang-${lang}">${esc(code.trim())}</code></pre>`)
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
+    .replace(/^---$/gm,'<hr>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank">$1</a>')
+    .replace(/^\d+\. (.+)$/gm,'<li class="ol-li">$1</li>')
+    .replace(/^[-*] (.+)$/gm,'<li>$1</li>');
+
+  // Wrap consecutive li into ul/ol
+  t = t.replace(/(<li class="ol-li">[\s\S]*?<\/li>(\s*<li class="ol-li">[\s\S]*?<\/li>)*)/g, m=>`<ol>${m.replace(/ class="ol-li"/g,'')}</ol>`);
+  t = t.replace(/(<li>[\s\S]*?<\/li>(\s*<li>[\s\S]*?<\/li>)*)/g, m=>{
+    if(m.includes('<ol>')) return m;
+    return `<ul>${m}</ul>`;
+  });
+
+  t = t.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');
+  return t;
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// ══════════════════════════════════════════════
+//  ADD MESSAGE HELPERS
+// ══════════════════════════════════════════════
+function addMsg(role,text,isTyping=false){
+  const box=document.getElementById('messages');
+  const wrap=document.createElement('div');wrap.className=`msg ${role}`;
+  const av=document.createElement('div');av.className='avatar';
+  av.textContent=role==='ai'?'✦':(userName?userName[0].toUpperCase():'U');
+  const bubble=document.createElement('div');bubble.className='bubble';
+  if(isTyping){
+    bubble.innerHTML='<div class="typing-dots"><span></span><span></span><span></span></div>';
+  } else {
+    bubble.innerHTML=renderMD(text);
+  }
+  wrap.appendChild(av);wrap.appendChild(bubble);
+  box.appendChild(wrap);box.scrollTop=99999;
+  return wrap;
+}
+
+function addMsgRaw(role,html){
+  const box=document.getElementById('messages');
+  const wrap=document.createElement('div');wrap.className=`msg ${role}`;
+  const av=document.createElement('div');av.className='avatar';
+  av.textContent=role==='ai'?'✦':(userName?userName[0].toUpperCase():'U');
+  const bubble=document.createElement('div');bubble.className='bubble';
+  bubble.innerHTML=html;
+  wrap.appendChild(av);wrap.appendChild(bubble);
+  box.appendChild(wrap);box.scrollTop=99999;
+  return wrap;
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,130)+'px';}
+function qp(t){document.getElementById('userInput').value=t;document.getElementById('userInput').focus();autoResize(document.getElementById('userInput'));}
+function clearChat(){
+  if(!confirm('Chat clear karna chahte ho? Sab messages delete ho jayenge.')) return;
+  history.length=0;
+  document.getElementById('messages').innerHTML='';
+  addMsg('ai',`Chat saaf ho gaya! ✨ Bolo **${userName}**, ab kya karna hai?`);
+}
+</script>
+</body>
+</html>
