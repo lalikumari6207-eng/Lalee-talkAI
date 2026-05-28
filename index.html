@@ -627,8 +627,9 @@ async function sendMessage(){
       addMsg('ai','Kuch technical issue hua! Thodi der baad dobara try karo. 🙏');
     }
   } catch(err){
-    typingEl.remove();
-    addMsg('ai','⚠️ Network problem! Connection check karo.');
+  console.error(err);
+  typingEl.remove();
+  addMsg('ai', '⚠️ Error: ' + err.message);
   }
 
   document.getElementById('sendBtn').disabled=false;
